@@ -3,20 +3,19 @@ import re
 from collections import defaultdict
 
 def preprocess_text(text):
-    """
-    Tokenizes and preprocesses text by converting to lowercase and removing punctuation.
-    """
+    
+    #wordizes and preprocesses text
     text = text.lower()
-    text = re.sub(r'\W+', ' ', text)  # Remove non-word characters
-    tokens = text.split()
-    return tokens
+    text = re.sub(r'\W+', ' ', text)  # removing non words
+    words = text.split()
+    return words
 
 def build_forward_index(data_file, lexicon_file, output_file):
     """
-    Reads the data.csv and lexicon.csv files, and builds a forward index mapping generated document IDs to token IDs.
-    Writes the forward index to a new CSV file.
+    reading the data.csv and lexicon.csv files
+    and then making a forward index that maps document on word ids and lemma ids
     """
-    # Step 1: Load the text column from data.csv
+    # loading the text from data
     documents = []
     with open(data_file, mode='r', encoding='utf-8') as file:
         reader = csv.DictReader(file)
@@ -24,36 +23,46 @@ def build_forward_index(data_file, lexicon_file, output_file):
             text = row.get('text', '')
             documents.append(text)
 
-    # Step 2: Load the lexicon mapping (Token -> ID)
-    token_to_id = {}
+    # Load the lexicon mapping of word to wordID and lemmaID
+    word_to_id = {}
+    lemma_to_id = {}
     with open(lexicon_file, mode='r', encoding='utf-8') as file:
         reader = csv.DictReader(file)
         for row in reader:
-            token = row.get('Token', '')
-            token_id = row.get('ID', '')
-            if token and token_id:
-                token_to_id[token] = token_id
+            word = row.get('Word', '')
+            word_id = row.get('Word ID', '')
+            lemma_id = row.get('Lemma ID', '')
+            #loading the list of word ids and lemma ids
+            if word and word_id and lemma_id:
+                word_to_id[word] = word_id
+                lemma_to_id[word] = lemma_id
 
-    # Step 3: Build the forward index
+    # making the dict of forward index
     forward_index = {}
-    for i, text in enumerate(documents, start=1):  # Generate sequential document IDs starting from 1
-        tokens = preprocess_text(text)
-        token_ids = [token_to_id[token] for token in tokens if token in token_to_id]
-        forward_index[i] = token_ids
+    for i, text in enumerate(documents, start=1):  # making documentID from 1 to n
+        words = preprocess_text(text)
+        word_ids = [word_to_id[word] for word in words if word in word_to_id]
+        lemma_ids = [lemma_to_id[word] for word in words if word in lemma_to_id]
+        forward_index[i] = {'wordIDs': word_ids, 'LemmaIDs': lemma_ids}
 
-    # Step 4: Write the forward index to a new CSV file
+    # to store the forward index to new csv file 
     with open(output_file, mode='w', encoding='utf-8', newline='') as file:
         writer = csv.writer(file)
-        writer.writerow(['DocumentID', 'TokenIDs'])  # Header
-        for doc_id, token_ids in forward_index.items():
-            writer.writerow([doc_id, ' '.join(token_ids)])
+        writer.writerow(['DocumentID', 'wordIDs', 'LemmaIDs'])  # header of csv
+        #for loop to write all the elements in forward index dict to the csv file
+        for doc_id, ids in forward_index.items():
+            writer.writerow([
+                doc_id,
+                ' '.join(ids['wordIDs']),  # Join word IDs with spaces
+                ' '.join(ids['LemmaIDs'])   # Join lemma IDs with spaces
+            ])
 
-# Paths to the input and output files
+# path of input output files
 data_csv = 'data.csv'
-lexicon_csv = 'lexicon_with_ids.csv'
+lexicon_csv = 'lexicon.csv'
 output_csv = 'forward_index.csv'
 
-# Build the forward index and save it to a CSV file
+# building the forward index and saving the files
 build_forward_index(data_csv, lexicon_csv, output_csv)
 
-print(f"Forward index saved to {output_csv}")
+print(f"forward index stored to path {output_csv}")
