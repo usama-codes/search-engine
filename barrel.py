@@ -4,7 +4,7 @@ import os
 csv.field_size_limit(10**7)
 
 # Define constants
-BARREL_SIZE = 110000  # Number of entries per barrel
+BARREL_SIZE = 11000  # Number of entries per barrel
 NUM_BARRELS = 50  # Total number of barrels
 DATA_FILE = "inverted_index.csv"  # Input file containing the inverted index
 BARRELS_DIR = "barrels"  # Directory to store barrel files
