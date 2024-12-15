@@ -26,9 +26,9 @@ def build_inverted_index(forward_index_file, output_file):
 
     if os.path.exists(output_file):
         overwrite = input(f"File '{output_file}' already exists. Overwrite? (y/n): ").strip().lower()
-    if overwrite != 'y':
-        print("Operation cancelled.")
-        return
+        if overwrite != 'y':
+            print("Operation cancelled.")
+            return
     
     elif not os.path.exists(output_file):
         open(output_file, 'w').close()
