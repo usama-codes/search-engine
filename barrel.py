@@ -3,42 +3,37 @@ import os
 
 csv.field_size_limit(10**7)
 
+# Define constants
+BARREL_SIZE = 110000  # Number of entries per barrel
+NUM_BARRELS = 50  # Total number of barrels
+DATA_FILE = "inverted_index.csv"  # Input file containing the inverted index
+BARRELS_DIR = "barrels"  # Directory to store barrel files
 
-TOTAL_WORDS = 521891
-BARREL_SIZE = 10000
-NUM_BARRELS = (TOTAL_WORDS + BARREL_SIZE - 1) // BARREL_SIZE
-
-DATA_FILE = "inverted_index.csv"
-BARRELS_DIR = "barrels"
-
+# Create the barrels directory if it doesn't exist
 os.makedirs(BARRELS_DIR, exist_ok=True)
 
-# Open barrel files for writing
-barrel_files = []
-barrel_writers = []
-for i in range(NUM_BARRELS):
-    f = open(os.path.join(BARRELS_DIR, f"barrel_{i}.csv"), 'w', newline='', encoding='utf-8')
-    writer = csv.writer(f)
-    barrel_files.append(f)
-    barrel_writers.append(writer)
+# Initialize barrel files and writers
+barrel_files = [open(f"{BARRELS_DIR}/barrel_{i}.csv", 'w', newline='', encoding='utf-8') for i in range(NUM_BARRELS)]
+barrel_writers = [csv.writer(f) for f in barrel_files]
 
+# Write headers to each barrel file
 with open(DATA_FILE, 'r', encoding='utf-8') as f:
     reader = csv.reader(f)
     header = next(reader)
-    # Write headers to each barrel file
     for writer in barrel_writers:
         writer.writerow(header)
+
+# Distribute rows to barrels based on Word ID
+with open(DATA_FILE, 'r', encoding='utf-8') as f:
+    reader = csv.reader(f)
+    next(reader)  # Skip header
     for row in reader:
-        id_type = row[0]
-        word_id = int(row[1])
-        # Determine the barrel index based on word_id
-        barrel_index = word_id // BARREL_SIZE
-        if barrel_index >= NUM_BARRELS:
-            barrel_index = NUM_BARRELS - 1  # Handle edge case
+        word_id = int(row[1])  # based on wordID and lemma ID
+        barrel_index = word_id % NUM_BARRELS  # Map Word ID/LemmaID to a barrel
         barrel_writers[barrel_index].writerow(row)
 
 # Close all barrel files
 for f in barrel_files:
     f.close()
 
-print(f"Barrels created and stored in '{BARRELS_DIR}' directory.")
+print(f"Barrels created and stored in '{BARRELS_DIR}' directory, organized by Word ID.")
