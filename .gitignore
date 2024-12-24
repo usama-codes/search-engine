@@ -7,3 +7,5 @@ title_ranking.py
 data.csv
 .vscode
 barrels/
+tag_ranking.py
+*.exe

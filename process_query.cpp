@@ -2,53 +2,55 @@
 #include "LoadLexicon.h"
 #include "LoadBarrel.h"
 
+using namespace std;
+
 // Function to split a string by a delimiter
-std::vector<std::string> split(const std::string& str, char delimiter) {
-    std::vector<std::string> tokens;
-    std::stringstream ss(str);
-    std::string token;
-    while (std::getline(ss, token, delimiter)) {
+vector<string> split(const string& str, char delimiter) {
+    vector<string> tokens;
+    stringstream ss(str);
+    string token;
+    while (getline(ss, token, delimiter)) {
         tokens.push_back(token);
     }
     return tokens;
 }
-int main() {
-    // File path to the lexicon CSV
-    std::string lexiconFilePath = "lexicon.csv";
 
-    // Initialize Lexicon
+
+int main() {
+    string lexiconFilePath = "lexicon.csv";
+
     LoadLexicon lexicon;
     LoadBarrel barrel;
 
     try {
-        // Load the lexicon
         lexicon.loadLexicon(lexiconFilePath);
-        std::cout << "Lexicon loaded successfully.\n";
-    } catch (const std::exception& e) {
-        std::cerr << e.what() << std::endl;
+        cout << "Lexicon loaded successfully.\n";
+    } 
+    catch (const exception& e) {
+        cerr << e.what() << endl;
         return 1;
     }
 
     // Query for words
-    std::string word;
-    std::cout << "Enter words to query their Word ID. Type 'exit' to quit.\n";
+    string word;
+    cout << "Enter words to query their Word ID. Type 'exit' to quit.\n";
     while (true) {
-        std::cout <<std::endl<< "Word: ";
-        std::cin >> word;
+        cout << endl << "Word: ";
+        cin >> word;
 
         if (word == "exit") {
-            std::cout << "Exiting.\n";
+            cout << "Exiting.\n";
             break;
         }
 
         int wordID = lexicon.getWordID(word);
         if (wordID != -1) {
-            std::cout << "Word ID for \"" << word << "\": " << wordID << "\n";
+            cout << "Word ID for \"" << word << "\": " << wordID << "\n";
             barrel.calculateBarrelIndex(wordID);
-            std::cout<<"Document IDs for word "<<word<<": ";
-            std::cout<<barrel.getDocumentIDs(wordID);
+            cout<<"Document IDs for word "<<word<<": ";
+            cout<<barrel.getDocumentIDs(wordID);
         } else {
-            std::cout << "Word \"" << word << "\" not found in the lexicon.\n";
+            cout << "Word \"" << word << "\" not found in the lexicon.\n";
         }
     }
 
