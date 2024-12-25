@@ -106,7 +106,7 @@ def save_output(output_file, output_data):
 # Example usage:
 data_file = 'data.csv'  # File containing document data (title, text, url, authors, timestamp, tags)
 lexicon_file = 'lexicon.csv'  # File containing lexicon (word, word_id, Lemma_id)
-output_file = 'output.csv'    # File to save the results
+output_file = 'forward_index.csv'    # File to save the results
 
 # Process the data and save the output
 output_data = process_data(data_file, lexicon_file)
