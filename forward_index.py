@@ -56,51 +56,54 @@ def process_document(doc, lexicon, max_frequency=255):
 
 def process_data(data_file, lexicon_file, max_frequency=255):
     """
-    Process the data file to create the forward index with word IDs, lexicon IDs, and bit arrays.
-    Includes only necessary columns: title, text, and tags.
+    Process the data file to create the forward index.
+    Returns data formatted for two-column output.
     """
-    # Load lexicon
     lexicon = load_lexicon(lexicon_file)
-    
     output_data = []
     
-    # Process each document using csv.reader to properly handle CSV format
     with open(data_file, 'r', encoding='utf-8') as f:
-        reader = csv.reader(f)  # Use csv.reader to handle the CSV format
-        next(reader)  # Skip header row if present
+        reader = csv.reader(f)
+        next(reader)
         
-        # Enumerate through the lines in the file to generate document ID
-        for document_id, row in enumerate(reader, 1):  # Start document_id from 1
-            if len(row) >= 3:  # Ensure we have at least title, text, and tags
-                # Extract only the required columns
+        for document_id, row in enumerate(reader, 1):
+            if len(row) >= 3:
                 title = row[0]
                 text = row[1]
-                tags = row[5] if len(row) > 5 else ""  # Handle missing tags
+                tags = row[5] if len(row) > 5 else ""
                 
-                # Create a reduced document containing only the necessary columns
                 reduced_doc = [title, text, tags]
-                
-                # Process the reduced document
                 word_info = process_document(reduced_doc, lexicon, max_frequency)
                 
-                # Collect the output: document ID + word ID + lexicon ID + bit array
-                output_line = [str(document_id)] + [f"{word_id}:{Lemma_id}:{bit_array}" for word_id, Lemma_id, bit_array in word_info]
-                output_data.append('\t'.join(output_line))
+                metadata = [f"{word_id}:{Lemma_id}:{bit_array}" for word_id, Lemma_id, bit_array in word_info]
+                output_line = str(document_id) + '\t' + ' '.join(metadata)
+                output_data.append(output_line)
             else:
                 print(f"Skipping line {document_id} due to insufficient columns.")
     
     return output_data
 
 
+
 def save_output(output_file, output_data):
     """
-    Save the processed output to a file.
+    Save the processed output to a file with 2 columns:
+    1. document_id
+    2. word_metadata (comma-separated list of word_id:Lemma_id:bit_array)
     """
-    with open(output_file, 'w', encoding='utf-8') as f:
+    with open(output_file, 'w', encoding='utf-8', newline='') as f:
+        writer = csv.writer(f)
         # Write header
-        f.write('document_id,word_id:Lemma_id:bit_array\n')
+        writer.writerow(['document_id', 'word_metadata'])
+        
         for line in output_data:
-            f.write(line + '\n')
+            # Split the line into document_id and metadata
+            parts = line.split('\t')
+            if len(parts) > 1:
+                doc_id = parts[0]
+                # Join all word metadata with commas
+                word_metadata = ','.join(parts[1:])
+                writer.writerow([doc_id, word_metadata])
 
 
 # Example usage:
