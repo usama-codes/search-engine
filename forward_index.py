@@ -104,6 +104,8 @@ def save_output(output_file, output_data):
                 # Join all word metadata with commas
                 word_metadata = ','.join(parts[1:])
                 writer.writerow([doc_id, word_metadata])
+        
+    print(f"Processed data saved to {output_file}.")
 
 
 # Example usage:

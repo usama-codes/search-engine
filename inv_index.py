@@ -1,49 +1,36 @@
 import csv
 import os
-from collections import defaultdict
 
-def build_inverted_index(forward_index_file, output_file):
-    """
-    Reads the forward index and builds an inverted index mapping word and lemma IDs to document IDs.
-    """
-    inverted_index = defaultdict(lambda: {'DocumentIDForWords': {}, 'DocumentIDForLemmas': {}})
+# Define constants
+NUM_BARRELS = 50  # Total number of barrels
+DATA_FILE = "inverted_index.csv"  # Input file containing the inverted index
+BARRELS_DIR = "barrels"  # Directory to store barrel files
 
-    if not os.path.isfile(forward_index_file) or os.path.getsize(forward_index_file) == 0:
-        raise FileNotFoundError(f"Input file '{forward_index_file}' does not exist or is empty.")
+# Create the barrels directory if it doesn't exist
+os.makedirs(BARRELS_DIR, exist_ok=True)
 
-    # Read the forward index file
-    with open(forward_index_file, mode='r', encoding='utf-8') as file:
-        reader = csv.reader(file, delimiter='\t')
-        next(reader)  # Skip header
-        for row in reader:
-            if len(row) < 2:
-                continue
-                
-            doc_id = row[0]
-            # Process each word:lemma:bit_array combination
-            for item in row[1:]:
-                word_id, lemma_id, bit_array = item.split(':')
-                # Store doc_id with its bit_array
-                inverted_index[word_id]['DocumentIDForWords'][doc_id] = bit_array
-                inverted_index[lemma_id]['DocumentIDForLemmas'][doc_id] = bit_array
+# Initialize barrel files and writers
+barrel_files = [open(f"{BARRELS_DIR}/barrel_{i}.csv", 'w', newline='', encoding='utf-8') for i in range(NUM_BARRELS)]
+barrel_writers = [csv.writer(f) for f in barrel_files]
 
-    with open(output_file, mode='w', encoding='utf-8', newline='') as file:
-        writer = csv.writer(file)
-        writer.writerow(['ID Type', 'ID', 'Document IDs and Bit Arrays'])
+# Write headers to each barrel file
+with open(DATA_FILE, 'r', encoding='utf-8') as f:
+    reader = csv.reader(f)
+    header = next(reader)  # Skip the header row
+    for writer in barrel_writers:
+        writer.writerow(header)
 
-        for id_value, id_type_dict in inverted_index.items():
-            if id_type_dict['DocumentIDForWords']:
-                doc_bits = ' '.join(f"{doc}:{bits}" for doc, bits in id_type_dict['DocumentIDForWords'].items())
-                writer.writerow(['WordID', id_value, doc_bits])
-            if id_type_dict['DocumentIDForLemmas']:
-                doc_bits = ' '.join(f"{doc}:{bits}" for doc, bits in id_type_dict['DocumentIDForLemmas'].items())
-                writer.writerow(['LemmaID', id_value, doc_bits])
+# Step 1: Read the inverted index from the CSV file and distribute it into barrels
+with open(DATA_FILE, 'r', encoding='utf-8') as f:
+    reader = csv.reader(f)
+    next(reader)  # Skip header
+    for row in reader:
+        word_id = int(row[0])  # The word_id from the inverted index
+        barrel_index = word_id % NUM_BARRELS  # Map word_id to a barrel (modulo NUM_BARRELS)
+        barrel_writers[barrel_index].writerow(row)  # Write the row to the corresponding barrel
 
-# File paths
-forward_index_file = 'forward_index.csv'  # Changed to match forward index output
-output_csv = 'inverted_index.csv'
+# Close all barrel files
+for f in barrel_files:
+    f.close()
 
-# Build and save the inverted index
-build_inverted_index(forward_index_file, output_csv)
-
-print(f"Inverted index stored at {output_csv}")
+print(f"Barrels created and stored in '{BARRELS_DIR}' directory, organized by Word ID.")

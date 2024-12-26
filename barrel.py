@@ -1,39 +1,48 @@
 import csv
 import os
 
-csv.field_size_limit(10**7)
+# Constants
+num_barrels = 50  # Number of barrels
+chunk_size = 2333  # Number of rows per barrel
 
-# Define constants
-BARREL_SIZE = 11000  # Number of entries per barrel
-NUM_BARRELS = 50  # Total number of barrels
-DATA_FILE = "inverted_index.csv"  # Input file containing the inverted index
-BARRELS_DIR = "barrels"  # Directory to store barrel files
+# Create barrel directories if they don't exist
+if not os.path.exists('barrels'):
+    os.mkdir('barrels')
 
-# Create the barrels directory if it doesn't exist
-os.makedirs(BARRELS_DIR, exist_ok=True)
+# Initialize empty barrels as lists
+barrels = {i: [] for i in range(num_barrels)}
 
-# Initialize barrel files and writers
-barrel_files = [open(f"{BARRELS_DIR}/barrel_{i}.csv", 'w', newline='', encoding='utf-8') for i in range(NUM_BARRELS)]
-barrel_writers = [csv.writer(f) for f in barrel_files]
-
-# Write headers to each barrel file
-with open(DATA_FILE, 'r', encoding='utf-8') as f:
+# Read the inverted index from a CSV file
+csv_filename = 'inverted_index.csv'  # Change this to your actual CSV file path
+with open(csv_filename, mode='r') as f:
     reader = csv.reader(f)
-    header = next(reader)
-    for writer in barrel_writers:
-        writer.writerow(header)
-
-# Distribute rows to barrels based on Word ID
-with open(DATA_FILE, 'r', encoding='utf-8') as f:
-    reader = csv.reader(f)
-    next(reader)  # Skip header
+    next(f)
     for row in reader:
-        word_id = int(row[1])  # based on wordID and lemma ID
-        barrel_index = word_id % NUM_BARRELS  # Map Word ID/LemmaID to a barrel
-        barrel_writers[barrel_index].writerow(row)
+        word_id = int(row[0])  # Assuming the first column is word_id
+        doc_info = row[1]  # Assuming the second column is doc_info
+        barrel_index = word_id % num_barrels  # Calculate barrel based on word_id % 50
+        barrels[barrel_index].append((word_id, doc_info))
 
-# Close all barrel files
-for f in barrel_files:
-    f.close()
+# Now, let's write each barrel to a separate file, ensuring we don't exceed chunk_size
+for barrel_index, data in barrels.items():
+    # Determine file name for each barrel
+    barrel_filename = f'barrels/barrel_{barrel_index}.csv'
+    
+    with open(barrel_filename, 'w') as f:
+        count = 0
+        for word_id, doc_info in data:
+            f.write(f'{word_id},{doc_info}\n')
+            count += 1
+            # If the number of rows exceeds the chunk size, create a new file
+            if count >= chunk_size:
+                f.close()
+                count = 0
+                # Open a new barrel file for the next chunk
+                barrel_filename = f'barrels/barrel_{barrel_index}_chunk_{count//chunk_size}.csv'
+                f = open(barrel_filename, 'w')
+                f.write(f'{word_id},{doc_info}\n')
+        
+        # Close the final file
+        f.close()
 
-print(f"Barrels created and stored in '{BARRELS_DIR}' directory, organized by Word ID.")
+print("Barrels have been created and written to files.")
