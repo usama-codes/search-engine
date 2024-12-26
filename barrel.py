@@ -30,6 +30,9 @@ for barrel_index, data in barrels.items():
     
     with open(barrel_filename, 'w') as f:
         count = 0
+
+        f.write("Word ID, Doc ID : Bit Array\n")
+
         for word_id, doc_info in data:
             f.write(f'{word_id},{doc_info}\n')
             count += 1
