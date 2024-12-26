@@ -1,36 +1,44 @@
 import csv
-import os
 
-# Define constants
-NUM_BARRELS = 50  # Total number of barrels
-DATA_FILE = "inverted_index.csv"  # Input file containing the inverted index
-BARRELS_DIR = "barrels"  # Directory to store barrel files
+# Step 1: Read the forward index from the CSV file
+forward_index = []
 
-# Create the barrels directory if it doesn't exist
-os.makedirs(BARRELS_DIR, exist_ok=True)
-
-# Initialize barrel files and writers
-barrel_files = [open(f"{BARRELS_DIR}/barrel_{i}.csv", 'w', newline='', encoding='utf-8') for i in range(NUM_BARRELS)]
-barrel_writers = [csv.writer(f) for f in barrel_files]
-
-# Write headers to each barrel file
-with open(DATA_FILE, 'r', encoding='utf-8') as f:
-    reader = csv.reader(f)
-    header = next(reader)  # Skip the header row
-    for writer in barrel_writers:
-        writer.writerow(header)
-
-# Step 1: Read the inverted index from the CSV file and distribute it into barrels
-with open(DATA_FILE, 'r', encoding='utf-8') as f:
-    reader = csv.reader(f)
-    next(reader)  # Skip header
+# Read the forward_index.csv file
+with open('forward_index.csv', 'r') as file:
+    reader = csv.reader(file)
+    next(file)  # Skip the header row
     for row in reader:
-        word_id = int(row[0])  # The word_id from the inverted index
-        barrel_index = word_id % NUM_BARRELS  # Map word_id to a barrel (modulo NUM_BARRELS)
-        barrel_writers[barrel_index].writerow(row)  # Write the row to the corresponding barrel
+        # Convert each row into a tuple (doc_id, word_metadata)
+        doc_id = int(row[0])  # The document ID
+        word_metadata = row[1]  # The word metadata string
+        forward_index.append((doc_id, word_metadata))
 
-# Close all barrel files
-for f in barrel_files:
-    f.close()
+# Step 2: Initialize an empty inverted index
+inverted_index = {}
 
-print(f"Barrels created and stored in '{BARRELS_DIR}' directory, organized by Word ID.")
+# Step 3: Process each document in the forward index
+for doc_id, word_metadata in forward_index:
+    # Split word_metadata into individual word_id:position:bitarray entries
+    entries = word_metadata.split()
+
+    # Step 4: Process each word metadata
+    for entry in entries:
+        word_id, position, bitarray = entry.split(':')
+        
+        word_id = int(word_id)  # Convert word_id to an integer
+
+        # Step 5: Add doc_id and bitarray to the inverted index for the current word_id
+        if word_id not in inverted_index:
+            inverted_index[word_id] = []
+
+        inverted_index[word_id].append(f"{doc_id}:{bitarray}")
+
+# Step 6: Write the inverted index to a CSV file
+with open('inverted_index.csv', 'w', newline='') as csvfile:
+    writer = csv.writer(csvfile)
+    writer.writerow(['word_id', 'doc_info'])
+    for word_id, doc_bitarray_pairs in inverted_index.items():
+        # Join doc_id:bitarray pairs with a space
+        writer.writerow([word_id, ' '.join(doc_bitarray_pairs)])
+
+print("Inverted index created successfully!")
