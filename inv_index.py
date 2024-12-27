@@ -38,3 +38,4 @@ with open('inverted_index.csv', 'w', newline='') as csvfile:
         writer.writerow([word_id, ' '.join(doc_bitarray_pairs)])
 
 print("Inverted index created successfully!")
+print("Inverted index created successfully!")

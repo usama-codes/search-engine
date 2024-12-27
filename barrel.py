@@ -15,6 +15,7 @@ csv_filename = 'inverted_index.csv'  # Change this to your actual CSV file path
 with open(csv_filename, mode='r') as f:
     reader = csv.reader(f)
     next(f)
+    next(f)
     for row in reader:
         word_id = int(row[0])  # Assuming the first column is word_id
         doc_info = row[1]  # Assuming the second column is doc_info
@@ -41,4 +42,5 @@ for barrel_index, data in barrels.items():
         
         f.close()
 
+print("Barrels have been created and written to files.")
 print("Barrels have been created and written to files.")
