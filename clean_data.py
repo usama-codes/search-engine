@@ -1,4 +1,3 @@
-
 import csv
 def process_data(data_file, lexicon_file, max_frequency=255):
     """

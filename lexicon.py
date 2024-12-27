@@ -4,7 +4,6 @@ import nltk
 from nltk.corpus import stopwords, wordnet
 from nltk.tokenize import word_tokenize
 from nltk.stem import WordNetLemmatizer
-import cProfile
 
 class Lexicon:
     """Class to build and manage lexicon mappings and save them to a file."""

@@ -19,11 +19,6 @@ std::vector<std::string> split(const std::string& str, char delimiter) {
     std::stringstream ss(str);
     std::string token;
     while (std::getline(ss, token, delimiter)) {
-std::vector<std::string> split(const std::string& str, char delimiter) {
-    std::vector<std::string> tokens;
-    std::stringstream ss(str);
-    std::string token;
-    while (std::getline(ss, token, delimiter)) {
         tokens.push_back(token);
     }
     return tokens;
@@ -73,22 +68,19 @@ int main() {
 
     std::map<int, std::vector<std::string>> documentData;
     try {
-        // Load the lexicon
         lexicon.loadLexicon(lexiconFilePath);
         std::cout << "Lexicon loaded successfully.\n";
 
-        // Set total number of documents (example value)
-        ranker.setTotalDocs(190000);
+        ranker.setTotalDocs(192368);
 
-        // Load document data from CSV
         documentData = retrieveDocumentData(dataFilePath);
         std::cout<<"Document data loaded successfully.\n";
-    } catch (const std::exception& e) {
+    }
+    catch (const std::exception& e) {
         std::cerr << e.what() << std::endl;
         return 1;
     }
 
-    // Query for words
     std::string word;
     std::cout << "Enter words to query their Word ID. Type 'exit' to quit.\n";
 
@@ -139,6 +131,9 @@ int main() {
                     }
                 }
 
+                documentIDs.clear();
+                bitArrays.clear();
+                queryWordIDs.clear();
             } catch (const std::exception& ex) {
                 std::cerr << "Error processing data: " << ex.what() << std::endl;
             }
@@ -146,6 +141,9 @@ int main() {
         } else {
             std::cout << "Word \"" << word << "\" not found in the lexicon.\n";
         }
+
+        documentData.clear();
+
     }
     return 0;
 }
