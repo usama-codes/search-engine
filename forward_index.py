@@ -15,7 +15,7 @@ def load_lexicon(lexicon_file):
 
 def process_document(doc, lexicon, max_frequency=255):
     """
-    Process a single document to generate the word IDs, lexicon IDs, and their bit arrays.
+    Process a single document to generate the Lemma IDs, and their bit arrays.
     """
     # Unpack the 6 values in the document (title, text, url, authors, timestamp, tags)
     title, text, tags = doc
@@ -35,24 +35,21 @@ def process_document(doc, lexicon, max_frequency=255):
 
     # Process each word's information
     for word, freq in word_frequency.items():
-        word_id, Lemma_id = lexicon.get(word, (None, None))
-        if word_id is not None:
-            # Title and tag presence (1 or 0)
+        # Retrieve Lemma ID instead of Word ID
+        Lemma_id = lexicon.get(word, (None, None))[1]  # Retrieve the Lemma ID (second element of tuple)
+        
+        if Lemma_id is not None:
             title_presence = 1 if word in words_in_title else 0
             tag_presence = 1 if word in words_in_tags else 0
             
-            # Limit frequency to the max frequency of 255
             frequency = min(freq, max_frequency)
             
-            # Create the 10-bit array:
-            # 1st bit = Title presence (1 or 0)
-            # 2nd bit = Tag presence (1 or 0)
-            # 8 bits for frequency (0-255)
             frequency_bits = frequency  # Frequency encoded as an 8-bit number
             bit_array = (title_presence << 9) | (tag_presence << 8) | frequency_bits
-            word_info.append((word_id, Lemma_id, bit_array))
+            word_info.append((Lemma_id, bit_array))  # Store Lemma ID with bit array
     
     return word_info
+
 
 def process_data(data_file, lexicon_file, max_frequency=255):
     """
@@ -75,7 +72,7 @@ def process_data(data_file, lexicon_file, max_frequency=255):
                 reduced_doc = [title, text, tags]
                 word_info = process_document(reduced_doc, lexicon, max_frequency)
                 
-                metadata = [f"{word_id}:{Lemma_id}:{bit_array}" for word_id, Lemma_id, bit_array in word_info]
+                metadata = [f"{Lemma_id}:{bit_array}" for Lemma_id, bit_array in word_info]
                 output_line = str(document_id) + '\t' + ' '.join(metadata)
                 output_data.append(output_line)
             else:

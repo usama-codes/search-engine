@@ -85,10 +85,14 @@ int main() {
 
                 std::cout << "\nRanked Documents:\n";
                 for (const auto& result : rankedResults) {
+                    if(result.second == 0.0) {
+                        continue;
+                    }
                     std::cout << "Doc " << result.first << ": Score = " << result.second << "\n";
                 }
 
-            } catch (const std::exception& ex) {
+            } 
+            catch (const std::exception& ex) {
                 std::cerr << "Error processing data: " << ex.what() << "\n";
             }
 

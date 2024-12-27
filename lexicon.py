@@ -1,25 +1,38 @@
 import pandas as pd
 import re
 import nltk
-from nltk.corpus import stopwords
+from nltk.corpus import stopwords, wordnet
 from nltk.tokenize import word_tokenize
 from nltk.stem import WordNetLemmatizer
 import cProfile
 
 class Lexicon:
     """Class to build and manage lexicon mappings and save them to a file."""
-    
-    def __init__(self, number_lemma_id=9999):
+    nltk.download('averaged_perceptron_tagger', quiet=True)
+
+    def __init__(self):
         self.wordID = {}
         self.lemmaID = {}
         self.wordToLemmaID = {}
         self.word_counter = 0
         self.lemma_counter = 0
-        self.number_lemma_id = number_lemma_id
         
         # Initialize NLTK resources
         self.stop_words = set(stopwords.words('english'))
         self.lemmatizer = WordNetLemmatizer()
+
+    def get_wordnet_pos(self, tag):
+        """Map POS tag to the format recognized by WordNetLemmatizer."""
+        if tag.startswith('J'):
+            return wordnet.ADJ
+        elif tag.startswith('V'):
+            return wordnet.VERB
+        elif tag.startswith('N'):
+            return wordnet.NOUN
+        elif tag.startswith('R'):
+            return wordnet.ADV
+        else:
+            return wordnet.NOUN 
     
     def clean_and_tokenize(self, text):
         """Cleans and tokenizes the text."""
@@ -29,10 +42,12 @@ class Lexicon:
         # Tokenize using NLTK
         tokens = word_tokenize(text.lower())
         
+        pos_tags = nltk.pos_tag(tokens)
+
         # Lemmatize and filter stop words and punctuation
         tokens = [
-            (word, self.lemmatizer.lemmatize(word))
-            for word in tokens
+            (word, self.lemmatizer.lemmatize(word, self.get_wordnet_pos(pos)))
+            for word, pos in pos_tags
             if word not in self.stop_words and word.isalpha()
         ]
         return tokens
@@ -46,22 +61,15 @@ class Lexicon:
             word = word.lower()
             lemma = lemma.lower()
 
-            # Handle special lemma ID for numbers
-            if word.isdigit():
-                if word not in self.wordID:
-                    self.wordID[word] = self.word_counter
-                    self.word_counter += 1
-                lemma = str(self.number_lemma_id)
-            else:
-                if word not in self.wordID:
-                    self.wordID[word] = self.word_counter
-                    self.word_counter += 1
-                if lemma not in self.lemmaID:
-                    self.lemmaID[lemma] = self.lemma_counter
-                    self.lemma_counter += 1
+            if word not in self.wordID:
+                self.wordID[word] = self.word_counter
+                self.word_counter += 1
+            if lemma not in self.lemmaID:
+                self.lemmaID[lemma] = self.lemma_counter
+                self.lemma_counter += 1
             
             # Map Word ID to Lemma ID
-            self.wordToLemmaID[self.wordID[word]] = self.lemmaID.get(lemma, self.number_lemma_id)
+            self.wordToLemmaID[self.wordID[word]] = self.lemmaID.get(lemma)
     
     def build_lexicon(self):
         """Builds a lexicon DataFrame."""
@@ -105,4 +113,4 @@ def profile_main():
     main()
 
 if __name__ == "__main__":
-    cProfile.run("profile_main()", filename='profile_output.prof')
+    main()

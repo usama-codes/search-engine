@@ -19,6 +19,7 @@ private:
     };
 
     std::unordered_map<int, Document> documents;  // To store doc data (doc_id => Document)
+    std::unordered_map<int, int> doc_frequencies; // To store doc frequency for each word (word_id => doc_frequency)
     int total_docs;
 
 public:
@@ -45,6 +46,9 @@ public:
         doc.term_freqs[word_id] = frequency;
         doc.term_in_title[word_id] = in_title;
         doc.term_in_tag[word_id] = in_tag;
+
+        // Increment doc frequency for the word if it's found in the document
+        doc_frequencies[word_id]++;
     }
 
     // Method to calculate term frequency with weightage for title/tag
@@ -78,8 +82,8 @@ public:
             for (int word_id : query_word_ids) {
                 if (doc.term_freqs.find(word_id) != doc.term_freqs.end()) {
                     double tf = calculate_tf(doc.term_freqs.at(word_id), doc.term_in_title.at(word_id), doc.term_in_tag.at(word_id));
-                    // IDF is not calculated here as we have no global word frequency data
-                    double idf = calculate_idf(1);  // Example, using a static value for now
+                    // IDF is calculated using doc_frequency
+                    double idf = calculate_idf(doc_frequencies[word_id]);
 
                     doc_score += tf * idf;
                 }
@@ -98,5 +102,11 @@ public:
     // Set the total document count
     void setTotalDocs(int total) {
         total_docs = total;
+    }
+
+    // Get the document frequency for a specific word ID
+    int getDocFrequency(int word_id) const {
+        auto it = doc_frequencies.find(word_id);
+        return it != doc_frequencies.end() ? it->second : 0;
     }
 };
