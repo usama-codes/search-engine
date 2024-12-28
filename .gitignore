@@ -11,3 +11,6 @@ tag_ranking.py
 *.exe
 data_cleaning.py
 process_query.cpp
+test/
+newdata.csv
+new_data.csv
