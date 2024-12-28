@@ -44,7 +44,7 @@ public:
             }
 
             std::string word = tokens[0];
-            int wordID = std::stoi(tokens[1]);
+            int wordID = std::stoi(tokens[2]);
 
             // Populate the map
             wordToID[word] = wordID;
