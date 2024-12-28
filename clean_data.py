@@ -13,7 +13,7 @@ def process_data(data_file, lexicon_file, max_frequency=255):
         
         for document_id, row in enumerate(reader, 1):
             if len(row) >= 3:
-                title = row[0]
+                title = row[0].replace(',',' ')
                 url = row[2]
                 tags = row[5] if len(row) > 5 else ""
                 output_line = str(document_id) + '\t' + ''.join(title)+ '\t' + ''.join(url)+ '\t' + ''.join(tags)
