@@ -26,14 +26,21 @@ std::vector<std::string> split(const std::string& str, char delimiter) {
     return tokens;
 }
 
+// Function to handle single and multiple word queries
 void handleQuery(const std::string& query, LoadLexicon& lexicon, LoadBarrel& barrel, TFIDFRanker& ranker, const std::map<int, std::vector<std::string>>& documentData) {
     std::vector<std::string> words = split(query, ' ');
+    if (words.empty()) {
+        std::cout << "Empty query received.\n";
+        return;
+    }
+
     if (words.size() == 1) {
+        // Single word logic
         std::string word = words[0];
         int wordID = lexicon.getWordID(word);
         if (wordID != -1) {
             std::cout << "Word ID for \"" << word << "\": " << wordID << "\n";
-                try {
+            try {
                 std::vector<std::string> documentIDs = barrel.getDocumentIDs(wordID);
                 std::vector<std::string> bitArrays = barrel.getBitArrays(wordID);
 
@@ -83,22 +90,37 @@ void handleQuery(const std::string& query, LoadLexicon& lexicon, LoadBarrel& bar
     else {
         // Multiple words logic
         std::vector<std::set<int>> docSets;
+        std::vector<int> queryWordIDs;
+
         for (const auto& word : words) {
             int wordID = lexicon.getWordID(word);
             if (wordID != -1) {
+                queryWordIDs.push_back(wordID);
                 std::vector<std::string> documentIDs = barrel.getDocumentIDs(wordID);
+                std::vector<std::string> bitArrays = barrel.getBitArrays(wordID);
+
+                if (documentIDs.size() != bitArrays.size()) {
+                    std::cerr << "Mismatch between document IDs and bit arrays for word: " << word << std::endl;
+                    continue;
+                }
+
                 std::set<int> docs;
-                for (const auto& id : documentIDs) {
-                    docs.insert(std::stoi(id));
+                for (size_t i = 0; i < documentIDs.size(); ++i) {
+                    int docID = std::stoi(documentIDs[i]);
+                    int bitArray = std::stoi(bitArrays[i]);
+                    ranker.processDocumentData(docID, wordID, bitArray); // Initialize ranker with each word's data
+                    docs.insert(docID);
                 }
                 docSets.push_back(docs);
             }
         }
+
         if (docSets.empty()) {
             std::cout << "No valid words found in the lexicon.\n";
             return;
         }
-        // Find intersection
+
+        // Find intersection of document sets
         std::set<int> intersectingDocs = docSets[0];
         for (const auto& ds : docSets) {
             std::set<int> temp;
@@ -106,27 +128,35 @@ void handleQuery(const std::string& query, LoadLexicon& lexicon, LoadBarrel& bar
                                   ds.begin(), ds.end(),
                                   std::inserter(temp, temp.begin()));
             intersectingDocs = temp;
-                }
-                // Rank intersecting documents
-                std::vector<int> queryWordIDs;
-                for (const auto& word : words) {
-                    queryWordIDs.push_back(lexicon.getWordID(word));
-                }
-                auto rankedResults = ranker.rank_documents(queryWordIDs);
-                std::cout << "\nRanked Documents:\n";
-                for (const auto& result : rankedResults) {
-                    if (intersectingDocs.find(result.first) != intersectingDocs.end()) {
-                        std::cout << "Doc " << result.first << ": Score = " << result.second << std::endl;
-                        if (documentData.find(result.first) != documentData.end()) {
-                            std::cout << "  Title: " << documentData.at(result.first)[0] << std::endl;
-                            std::cout << "  URL: " << documentData.at(result.first)[1] << std::endl;
-                            std::cout << "  Tags: " << documentData.at(result.first)[2] << std::endl;
-                        }
-                    }
-                }
-            }
         }
 
+        if (intersectingDocs.empty()) {
+            std::cout << "No documents contain all the query words.\n";
+            return;
+        }
+
+        // Rank intersecting documents
+        auto rankedResults = ranker.rank_documents(queryWordIDs);
+        std::cout << "\nRanked Documents:\n";
+        int docsToFetch = 10;
+        for (const auto& result : rankedResults) {
+            if(docsToFetch-- == 0)
+                break;
+
+            if (intersectingDocs.find(result.first) == intersectingDocs.end() || result.second == 0.0)
+                continue;
+
+            std::cout << "Doc " << result.first << ": Score = " << result.second << std::endl;
+            if (documentData.find(result.first) != documentData.end()) {
+                std::cout << "  Title: " << documentData.at(result.first)[0] << std::endl;
+                std::cout << "  URL: " << documentData.at(result.first)[1] << std::endl;
+                std::cout << "  Tags: " << documentData.at(result.first)[2] << std::endl;
+            }
+        }
+    }
+}
+
+// ...existing code...
 // Function to retrieve document data from CSV
 std::map<int, std::vector<std::string>> retrieveDocumentData(const std::string& data_file) {
     std::map<int, std::vector<std::string>> documentData;
