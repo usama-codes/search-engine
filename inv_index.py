@@ -1,5 +1,6 @@
 import csv
 
+csv.field_size_limit(1000000000)  # Increase the field size limit for large CSV files
 # Step 1: Read the forward index from the CSV file
 forward_index = []
 
@@ -18,14 +19,14 @@ inverted_index = {}
 
 # Step 3: Process each document in the forward index
 for doc_id, word_metadata in forward_index:
-    # Split word_metadata into individual word_id:position:bitarray entries
+    # Split word_metadata into individual word_id:lemma_id:bitarray entries
     entries = word_metadata.split()
 
     # Step 4: Process each word metadata
     for entry in entries:
-        word_id, position, bitarray = entry.split(':')
+        word_id, lemma_id, bitarray = entry.split(':')
         
-        word_id = int(word_id)  # Convert word_id to an integer
+        word_id = int(lemma_id)  # Convert word_id to an integer
 
         # Step 5: Add doc_id and bitarray to the inverted index for the current word_id
         if word_id not in inverted_index:
