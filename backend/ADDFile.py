@@ -4,8 +4,10 @@ import re
 from nltk.tokenize import word_tokenize
 from nltk.corpus import stopwords
 from nltk.stem import WordNetLemmatizer
+import pathlib
 
-
+base_dir = pathlib.Path(__file__).parent.parent
+newdata = base_dir / 'engine_data' / 'newdata.csv'
 class ADDFile:
     csv.field_size_limit(10**7)
     def __init__(self, lexicon_file, barrel_directory, doc_id_file, num_barrels=50):
@@ -105,7 +107,7 @@ class ADDFile:
                 url = row[2]
                 text = row[1]
                 tags = row[5] if len(row) > 5 else ""
-                with open('D:/NUST/SEMESTER_3/DSA/End_Project/test/engine_data/newdata.csv', 'a', encoding='utf-8', newline='') as h:
+                with open(newdata, 'a', encoding='utf-8', newline='') as h:
                     writer = csv.writer(h)
                     writer.writerow([doc_id, title, url, tags])
 
